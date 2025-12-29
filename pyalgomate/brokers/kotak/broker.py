@@ -36,7 +36,7 @@ underlyingMapping = {
     'NIFTY': {
         'optionPrefix': 'NIFTY',
         'index': UnderlyingIndex.NIFTY,
-        'lotSize': 25,
+        'lotSize': 75,
         'strikeDifference': 50
     },
     'FINNIFTY': {
@@ -83,23 +83,31 @@ status_mapping = {
 #         expiry_day_str = f"0{expiry.day}"
 #     return f"{underlyingInstrument}23{expiry_month_str}{expiry_day_str}{strikePrice}{callOrPut}E"
 
-def getOptionSymbol(underlyingInstrument, expiry, strikePrice, callOrPut):
-    monthly = utils.getNearestMonthlyExpiryDate(expiry) == expiry
-    strikePlusOption = str(strikePrice) + ('CE' if (callOrPut ==
-                                                    'C' or callOrPut == 'Call') else 'PE')
-    if monthly:
-        return underlyingInstrument + str(expiry.year % 100) + calendar.month_abbr[expiry.month].upper() + strikePlusOption
-    else:
-        if expiry.month == 10:
-            monthlySymbol = 'O'
-        elif expiry.month == 11:
-            monthlySymbol = 'N'
-        elif expiry.month == 12:
-            monthlySymbol = 'D'
-        else:
-            monthlySymbol = f'{expiry.month}'
-        return underlyingInstrument + str(expiry.year % 100) + f"{monthlySymbol}{expiry.day:02d}" + strikePlusOption
+import calendar
 
+def getOptionSymbol(underlyingInstrument, expiry, strikePrice, callOrPut):
+    # Standardize inputs
+    yy = str(expiry.year % 100)
+    strike = str(strikePrice)
+    type_suffix = 'CE' if callOrPut in ['C', 'Call'] else 'PE'
+    
+    # Check if the given expiry matches the "Monthly" expiry date
+    # (e.g., checks if it is the last Tuesday/Thursday of the month)
+    is_monthly = utils.getNearestMonthlyExpiryDate(expiry) == expiry
+
+    if is_monthly:
+        # MONTHLY FORMAT: NIFTY26JAN24950PE
+        # Uses standard 3-letter month abbreviation (JAN, FEB, etc.)
+        mmm = calendar.month_abbr[expiry.month].upper()
+        return f"{underlyingInstrument}{yy}{mmm}{strike}{type_suffix}"
+    
+    else:
+        # WEEKLY FORMAT: NIFTY2610624150CE
+        # Uses Numeric Month (1-12) and 2-digit Day (01-31)
+        m = str(expiry.month)     # e.g., '1' for Jan, '10' for Oct
+        dd = f"{expiry.day:02d}"  # e.g., '06', '15'
+        
+        return f"{underlyingInstrument}{yy}{m}{dd}{strike}{type_suffix}"
 
 def getOptionSymbols(underlyingInstrument, expiry, ltp, count, strikeDifference=100):
     ltp = int(float(ltp) / strikeDifference) * strikeDifference

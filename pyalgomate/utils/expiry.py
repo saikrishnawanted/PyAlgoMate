@@ -55,7 +55,8 @@ listOfNseHolidays = set([
 expiryDays = {
     UnderlyingIndex.NIFTY: {
         (datetime.date(1900, 1, 1), datetime.date(2100, 1, 1)): {
-            "weekly": pendulum.THURSDAY
+            "weekly": pendulum.TUESDAY,
+            "monthly": pendulum.TUESDAY
         }
     },
     UnderlyingIndex.BANKNIFTY: {
@@ -83,7 +84,7 @@ expiryDays = {
     },
     UnderlyingIndex.SENSEX: {
         (datetime.date(1900, 1, 1), datetime.date(2100, 1, 1)): {
-            "weekly": pendulum.FRIDAY
+            "weekly": pendulum.THURSDAY
         }
     },
     UnderlyingIndex.BANKEX: {
@@ -159,14 +160,24 @@ def getNextWeeklyExpiryDate(date: datetime.date = None, index: UnderlyingIndex =
     return getNearestWeeklyExpiryDate(expiryDate + datetime.timedelta(days=5), index)
 
 
-def getNearestMonthlyExpiryDate(date: datetime.date = None, index: UnderlyingIndex = UnderlyingIndex.BANKNIFTY):
-    currentDate = pendulum.now().date() if date is None else pendulum.date(
-        date.year, date.month, date.day)
-    expiryDay, monthlyExpiryDay = _getExpiryDay(currentDate, index)
-    expiryDate = currentDate.last_of('month', monthlyExpiryDay)
-    if (currentDate > expiryDate):
-        expiryDate = currentDate.add(months=1).last_of(
-            'month', monthlyExpiryDay)
+def getNearestMonthlyExpiryDate(date_obj: datetime.date = None, index: UnderlyingIndex = UnderlyingIndex.NIFTY):
+    # 1. Normalize the input date to a pendulum date object
+    if date_obj is None:
+        currentDate = pendulum.now().date()
+    else:
+        currentDate = pendulum.date(date_obj.year, date_obj.month, date_obj.day)
+
+    # 2. Find the last Tuesday of the current month
+    # pendulum.TUESDAY is the constant for Tuesday
+    expiryDate = currentDate.last_of('month', pendulum.TUESDAY)
+
+    # 3. Check for Rollover
+    # If the input date is after this month's last Tuesday, 
+    # the "nearest" monthly expiry is the last Tuesday of next month.
+    if currentDate > expiryDate:
+        expiryDate = currentDate.add(months=1).last_of('month', pendulum.TUESDAY)
+
+    # 4. Handle Holidays (Previous trading day logic)
     return __considerHolidayList(expiryDate)
 
 

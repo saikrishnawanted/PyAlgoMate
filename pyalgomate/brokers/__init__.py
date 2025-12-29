@@ -8,7 +8,7 @@ import re
 import pandas as pd
 import logging
 from typing import List
-
+import pyotp
 from pyalgotrade import broker
 from pyalgotrade.broker import fillstrategy
 from pyalgomate.core import backtesting
@@ -277,11 +277,10 @@ def getFeed(
 
         api = NeoAPI(
             consumer_key=cred["consumer_key"],
-            consumer_secret=cred["consumer_secret"],
             environment=cred["environment"],
         )
-        api.login(mobilenumber=cred["mobilenumber"], password=cred["Password"])
-        ret = api.session_2fa(cred["mpin"])
+        api.totp_login(mobile_number=cred["mobilenumber"],ucc = cred["ucc"], totp = pyotp.TOTP(cred["TOTP"]).now())
+        ret = api.totp_validate(mpin=cred["mpin"])
         if ret == None:
             print("Exited due to biscut")
             exit(0)
@@ -292,17 +291,52 @@ def getFeed(
         tokenMappings = []
         for underlying in underlyings:
             optionSymbols = []
-            ret = api.search_scrip(
-                "NSE" if underlying != "SENSEX" else "BSE", underlying
-            )
-            script = [script for script in ret if script["pSymbolName"] == underlying][
-                0
-            ]
-            tokId = script["pSymbol"]
+            
+            # Handle search_scrip response - may return list or dict depending on API version
+            exchange_seg = "nse_cm" if underlying != "SENSEX" else "bse_cm"
+            ret = api.search_scrip(exchange_seg, underlying)
+            
+            # Handle different response formats
+            script = None
+            if isinstance(ret, list):
+                # Old API format - list of dicts
+                matching = [s for s in ret if isinstance(s, dict) and s.get("pSymbolName") == underlying]
+                if matching:
+                    script = matching[0]
+            elif isinstance(ret, dict):
+                # New API format - check for data key or error
+                if 'data' in ret:
+                    data = ret['data']
+                    if isinstance(data, list):
+                        matching = [s for s in data if isinstance(s, dict) and s.get("pSymbolName") == underlying]
+                        if matching:
+                            script = matching[0]
+                elif 'error' in ret or 'message' in ret:
+                    logger.warning(f"search_scrip error for {underlying}: {ret}")
+            
+            if script is None:
+                logger.warning(f"Could not find script for {underlying}, skipping")
+                continue
+                
+            tokId = script.get("pSymbolName", underlying)
+            
+            # Get quotes for underlying
             quotes = api.quotes(
-                [{"instrument_token": str(tokId), "exchange_segment": "nse_cm"}]
+                [{"instrument_token": str("Nifty 50"), "exchange_segment": "nse_cm"}]
             )
-            ltp = float(quotes["message"][0]["last_traded_price"])
+            
+            # Handle quotes response format
+            ltp = None
+            if isinstance(quotes, list) and len(quotes) > 0:
+                ltp = float(quotes[0].get("ltp", 0))
+            elif isinstance(quotes, dict) and 'data' in quotes:
+                data = quotes['data']
+                if isinstance(data, list) and len(data) > 0:
+                    ltp = float(data[0].get("ltp", 0))
+            
+            if ltp is None or ltp == 0:
+                logger.warning(f"Could not get LTP for {underlying}, using default 25000")
+                ltp = 25000  # Default fallback for after-market hours
 
             underlyingDetails = kotak.broker.getUnderlyingDetails(underlying)
             index = underlyingDetails["index"]

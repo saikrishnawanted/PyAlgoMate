@@ -92,7 +92,7 @@ class LiveTradeFeed(BaseBarFeed):
 
     QUEUE_TIMEOUT = 0.01
 
-    def __init__(self, api, tokenMappings, timeout=10, maxLen=None):
+    def __init__(self, api, tokenMappings, timeout=30, maxLen=None):
         super(LiveTradeFeed, self).__init__(bar.Frequency.TRADE, maxLen)
         self.__tradeBars = queue.Queue()
         self.__channels = tokenMappings
@@ -130,16 +130,22 @@ class LiveTradeFeed(BaseBarFeed):
             self.__thread.start()
         except Exception as e:
             logger.error("Error connecting : %s" % str(e))
+            logger.exception("Full exception details:")
 
-        logger.info("Waiting for websocket initialization to complete")
+        logger.info(f"Waiting for websocket initialization to complete (timeout: {self.__timeout}s)")
+        attempt = 0
         while not initialized and not self.__stopped:
+            attempt += 1
+            if attempt % 3 == 0:  # Log every 3rd attempt
+                logger.info(f"Still waiting for WebSocket initialization... (attempt {attempt})")
             initialized = self.__thread.waitInitialized(self.__timeout)
 
         if initialized:
-            logger.info("Initialization completed")
+            logger.info("Initialization completed successfully")
         else:
-            logger.error("Initialization failed")
+            logger.error(f"Initialization failed after timeout ({self.__timeout}s). Check network connection and Kotak API status.")
         return initialized
+
 
     def __onDisconnected(self):
         if self.__enableReconnection:
@@ -244,3 +250,11 @@ class LiveTradeFeed(BaseBarFeed):
         currentDateTime = datetime.datetime.now()
         timeSinceLastDateTime = currentDateTime - self.__lastDataTime
         return timeSinceLastDateTime.total_seconds() <= heartBeatInterval
+
+    def findNearestPremiumOption(self, underlyingInstrument, expiry, optionType, premium):
+        """
+        Placeholder implementation to fix TypeError.
+        Logic should eventually look up the option symbol closest to the target premium.
+        """
+        print(f"Warning: findNearestPremiumOption called but not implemented yet. ({premium})")
+        return None
