@@ -141,6 +141,8 @@ class ResampledBars():
             self.sendBars()
 
     def checkNow(self, dateTime):
+        if dateTime is None:
+            return
         if (self.__grouper is not None) and (self.__range is not None) and (not self.__range.belongs(dateTime)):
             self.__values.append(self.__grouper.getGrouped())
             self.__grouper = None

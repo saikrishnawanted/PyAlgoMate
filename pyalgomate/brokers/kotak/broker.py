@@ -20,6 +20,9 @@ from pyalgomate.utils import UnderlyingIndex
 logger = logging.getLogger(__file__)
 logger.propagate = False
 
+def getUnderlyingMappings():
+    return underlyingMapping
+
 underlyingMapping = {
     'MIDCPNIFTY': {
         'optionPrefix': 'MIDCPNIFTY',
@@ -577,7 +580,10 @@ class LiveBroker(broker.Broker):
 
     def getCash(self, includeShort=True):
         return self.__cash
-
+    
+    def getUnderlyingMappings(self):
+        return getUnderlyingMappings()
+    
     def getShares(self, instrument):
         return self.__shares.get(instrument, 0)
 
