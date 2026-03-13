@@ -13,6 +13,8 @@ TBS1.yaml
 test.ipynb
 TimeBasedStraddlesV4.py
 TimeBasedStraddlesV2.py
+05.parquet
+09.parquet
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

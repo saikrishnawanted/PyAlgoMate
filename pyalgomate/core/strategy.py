@@ -396,7 +396,6 @@ class BaseStrategy(object):
         return self.dispatcher.run(
             self.enterLongLimitAsync(
                 instrument,
-                None,
                 limitPrice,
                 quantity,
                 goodTillCanceled,

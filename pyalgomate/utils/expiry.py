@@ -55,8 +55,8 @@ listOfNseHolidays = set([
 expiryDays = {
     UnderlyingIndex.NIFTY: {
         (datetime.date(1900, 1, 1), datetime.date(2100, 1, 1)): {
-            "weekly": pendulum.TUESDAY,
-            "monthly": pendulum.TUESDAY
+            "weekly": pendulum.THURSDAY,
+            "monthly": pendulum.THURSDAY
         }
     },
     UnderlyingIndex.BANKNIFTY: {
