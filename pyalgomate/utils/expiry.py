@@ -49,14 +49,33 @@ listOfNseHolidays = set([
     pendulum.Date(2024, 10, 2),  # Mahatma Gandhi Jayanti
     pendulum.Date(2024, 11, 1),  # Diwali-Laxmi Pujan*
     pendulum.Date(2024, 11, 15),  # Gurunanak Jayanti
-    pendulum.Date(2024, 12, 25)   # Christmas
+    pendulum.Date(2024, 12, 25),  # Christmas
+
+    # 2026 holidays (derived from NSE trading calendar in 2026 options data)
+    pendulum.Date(2026, 1, 15),   # Makar Sankranti / Pongal
+    pendulum.Date(2026, 1, 26),   # Republic Day
+    pendulum.Date(2026, 3, 3),    # Holi
+    pendulum.Date(2026, 3, 26),   # Ram Navami
+    pendulum.Date(2026, 3, 31),   # Id-ul-Fitr
+    pendulum.Date(2026, 4, 3),    # Good Friday
+    pendulum.Date(2026, 4, 14),   # Dr.Baba Saheb Ambedkar Jayanti
+    pendulum.Date(2026, 5, 1),    # Maharashtra Day
+    pendulum.Date(2026, 5, 28),   # Buddha Purnima
+    pendulum.Date(2026, 6, 26),   # Id-ul-adha (Bakri Id)
+    pendulum.Date(2026, 9, 14),   # Ganesh Chaturthi
+    pendulum.Date(2026, 10, 2),   # Mahatma Gandhi Jayanti
+    pendulum.Date(2026, 10, 20),  # Dussehra
 ])
 
 expiryDays = {
     UnderlyingIndex.NIFTY: {
-        (datetime.date(1900, 1, 1), datetime.date(2100, 1, 1)): {
+        (datetime.date(1900, 1, 1), datetime.date(2025, 9, 1)): {
             "weekly": pendulum.THURSDAY,
             "monthly": pendulum.THURSDAY
+        },
+        (datetime.date(2025, 9, 1), datetime.date(2100, 1, 1)): {
+            "weekly": pendulum.TUESDAY,
+            "monthly": pendulum.TUESDAY
         }
     },
     UnderlyingIndex.BANKNIFTY: {

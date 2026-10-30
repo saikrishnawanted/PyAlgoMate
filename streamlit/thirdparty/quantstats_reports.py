@@ -33,7 +33,12 @@ from io import StringIO
 try:
     from IPython.display import display as iDisplay, HTML as iHTML
 except ImportError:
-    from IPython.core.display import display as iDisplay, HTML as iHTML
+    try:
+        from IPython.core.display import display as iDisplay, HTML as iHTML
+    except ImportError:
+        # IPython is optional
+        iDisplay = None
+        iHTML = None
 
 
 def _get_trading_periods(periods_per_year=252):
@@ -210,7 +215,7 @@ def html(
             )
         tpl = tpl.replace("{{dd_info}}", dd_html_table)
 
-    active = kwargs.get("active_returns", "False")
+    active = kwargs.get("active_returns", False)
     # plots
     figfile = _utils._file_stream()
     _plots.returns(
@@ -222,7 +227,7 @@ def html(
         savefig={"fname": figfile, "format": figfmt},
         show=False,
         ylabel=False,
-        cumulative=compounded,
+        compound=compounded,
         prepare_returns=False,
     )
     tpl = tpl.replace("{{returns}}", _embed_figure(figfile, figfmt))
@@ -237,7 +242,7 @@ def html(
         savefig={"fname": figfile, "format": figfmt},
         show=False,
         ylabel=False,
-        cumulative=compounded,
+        compound=compounded,
         prepare_returns=False,
     )
     tpl = tpl.replace("{{log_returns}}", _embed_figure(figfile, figfmt))
@@ -254,7 +259,7 @@ def html(
             savefig={"fname": figfile, "format": figfmt},
             show=False,
             ylabel=False,
-            cumulative=compounded,
+            compound=compounded,
             prepare_returns=False,
         )
         tpl = tpl.replace("{{vol_returns}}", _embed_figure(figfile, figfmt))
@@ -510,7 +515,7 @@ def full(
     if benchmark is not None:
         benchmark_title = kwargs.get("benchmark_title", "Benchmark")
     strategy_title = kwargs.get("strategy_title", "Strategy")
-    active = kwargs.get("active_returns", "False")
+    active = kwargs.get("active_returns", False)
 
     if isinstance(returns, _pd.DataFrame):
         if len(returns.columns) > 1 and isinstance(strategy_title, str):
@@ -660,7 +665,7 @@ def basic(
     if benchmark is not None:
         benchmark_title = kwargs.get("benchmark_title", "Benchmark")
     strategy_title = kwargs.get("strategy_title", "Strategy")
-    active = kwargs.get("active_returns", "False")
+    active = kwargs.get("active_returns", False)
 
     if isinstance(returns, _pd.DataFrame):
         if len(returns.columns) > 1 and isinstance(strategy_title, str):

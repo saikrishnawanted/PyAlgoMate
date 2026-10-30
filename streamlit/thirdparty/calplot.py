@@ -202,9 +202,10 @@ def yearplot(data, year=None, how='sum',
     ax.set_yticklabels([daylabels[i] for i in dayticks], rotation='horizontal',
                        va='center')
 
-    monthly_sum = by_day.groupby(pd.Grouper(freq='M')).sum()['data']
+    monthly_sum = by_day.groupby(pd.Grouper(freq='ME')).sum()['data']
+    monthly_sum_values = monthly_sum.tolist()
     for month, week_start in zip(range(1, 13), ax.get_xticks()):
-        profit = round(monthly_sum[month - 1], 2)
+        profit = round(monthly_sum_values[month - 1], 2)
         text = ax.text(week_start, 0, profit,
                        color='green' if profit >= 0 else 'red', ha='center', va='bottom', fontsize=7, fontname='Open Sans',
                        fontweight='bold')

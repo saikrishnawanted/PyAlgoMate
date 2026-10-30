@@ -1,3 +1,9 @@
+import os
+import sys
+
+# Make sibling imports (thirdparty) work regardless of the server's working directory.
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
 import pandas as pd
 import numpy as np
 import plotly.graph_objs as go
@@ -147,7 +153,7 @@ def showStats(initialCapital: int, numOfFiles: int, tradesData: pd.DataFrame):
     winPercentage = (wins / totalCount) * 100
     lossPercentage = (losses / totalCount) * 100
     monthlyProfit = tradesData.resample(
-        'M', on='Date').sum(numeric_only=True)['PnL'].mean()
+        'ME', on='Date').sum(numeric_only=True)['PnL'].mean()
     averageProfitOnWins = tradesData['PnL'][tradesData['PnL'] > 0].mean()
     averageLossOnLosses = tradesData['PnL'][tradesData['PnL'] < 0].mean()
 
@@ -226,7 +232,7 @@ def showStats(initialCapital: int, numOfFiles: int, tradesData: pd.DataFrame):
 
     # Calculate the Return to MDD ratio
     averageYearlyProfit = tradesData.set_index(
-        'Date')['PnL'].cumsum().resample('Y').last().diff().mean()
+        'Date')['PnL'].cumsum().resample('YE').last().diff().mean()
     returnToMddRatio = abs(averageYearlyProfit / mdd)
 
     col1, col2, col3 = st.columns(3, gap='small')
@@ -436,9 +442,11 @@ def main():
         with st.expander('Get Quantstats Report'):
             result = st.button('Run')
             if result:
-                pnls = tradesData['PnL']
+                # QuantStats expects a daily returns series with a unique DatetimeIndex.
+                # Trade-level entry timestamps contain duplicates, so aggregate PnL by day first.
+                pnls = tradesData.groupby('Date')['PnL'].sum()
                 returns = pnls / initialCapital
-                returns.index = pd.to_datetime(tradesData['Entry Date/Time'])
+                returns.index = pd.to_datetime(returns.index)
                 st.components.v1.html(quantstats_reports.html(returns, title='Tearsheet', compounded=False, output='tearsheet.html'),
                                       height=1000,
                                       scrolling=True)
